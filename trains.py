@@ -5,72 +5,110 @@ Created on Thu May 14 15:29:53 2020
 Railway booking system
 
 Goal:
-    1. Make bookings and lock a seat
+    1. Create a train run using train and seating details
+        - create train and seating details
     2. Modify bookins
     
 @author: cgokh
 """
 
+import pandas as pd
+import os
+
 class Train:
     
-    def __init__(self, number, coaches, ac3, ac2, ac1, sl, coach_type,
-                 destination, origin):
+    def __init__(self, number):
+        ''' 
         
+        Initializes the rake details from a csv file sitting on disk (or server)
+        
+        Rake details are not fixed and rakes keep changing and hence
+        
+        '''
+        # Using this number we will init the corresponding train
         self._number = number
-        self._coaches = coaches
-        self._ac3 = ac3
-        self._ac2 = ac2
-        self._ac1 = ac1
-        self._sl = sl
-        self._coach_type = coach_type
-        self._destination = destination
-        self._origin = origin
+        self._consist_created = False
         
-        # All trains have 2 slr coaches
-        self._slr = 2
+        # Download rake info
+        train_consists = pd.read_csv(os.path.join("C:\\DataScience\\Github\\PythonOOP", "train_consists.csv"))
+        # Filter rake info for specific train
+        train_consists = train_consists[train_consists['Number'] == number]
+        train_consists.DateModified = pd.to_datetime(train_consists.DateModified)
+        latest_modified_date = train_consists.DateModified.min()
+        current_consist = train_consists[train_consists['DateModified'] == latest_modified_date]
+        
+        # Checking if current_consist has only 1 row
+        if not current_consist.shape[0] == 1:
+            raise ValueError(f"There should only be one latest consist")
+            
+        # Fetch rake info and init
+        self._threeTierAC = int(current_consist["ThreeTierAC"])
+        self._twoTierAC = int(current_consist["TwoTierAC"])
+        self._firstAC = int(current_consist["FirstAC"])
+        self._sleeper = int(current_consist["Sleeper"])
+        self._pantry = int(current_consist["PantryIndicator"])
+        self._rakeType = current_consist["RakeType"]
+        self._destination = current_consist["Destination"]
+        self._origin = current_consist["Origin"]
+        
+        # All trains have 2 slr coaches. SLR stands for seating-cum luggage rake
+        self._SLR = 2
         
         # Class invariants
         if not isinstance(self._number, int):
             raise ValueError(f"Expected an int, got a {type(self._number)} instead")
             
+    
+    def num_coaches(self):
+        ''' Returns total number of coaches '''
         
+        return self._threeTierAC + self._twoTierAC + self._firstAC + self._sleeper + self._pantry + self._SLR
+    
     def get_details(self):
+        ''' Prints train details '''
         
         print(f"This number of this train is {self._number} going from \
               {self._origin} to {self._destination}")
                                  
     def create_consist(self):
         '''
-        Steps:
-            1. Create coach numbers
-            2. Create a dict having seats in each coach as values and coach no. as key
-            3. Create a dict for each seat and initialize the values with Nones and keys as seat details
-            4. Return the object
+        Creates consist of a train based on the current alignment of coaches
         '''
-        self._ac3_coach_list = ['B'+i for i in [str(i) for i in range(1, self._ac3 + 1)]]
-        self._ac2_coach_list = ['A'+i for i in [str(i) for i in range(1, self._ac2 + 1)]]
-        self._ac1_coach_list = ['H'+i for i in [str(i) for i in range(1, self._ac1 + 1)]]
-        self._sl_coach_list = ['S'+i for i in [str(i) for i in range(1, self._sl + 1)]]
-        self._all_coach_list = self._ac3_coach_list + self._ac2_coach_list + self._ac1_coach_list + self._sl_coach_list
+        if not self._consist_created:
+            self._threeTierAc_coachList = ['B'+i for i in [str(i) for i in range(1, self._threeTierAC + 1)]]
+            self._twoTierAC_coachList = ['A'+i for i in [str(i) for i in range(1, self._twoTierAC + 1)]]
+            self._firstAC_coachList = ['H'+i for i in [str(i) for i in range(1, self._firstAC + 1)]]
+            self._sleeper_coachList = ['S'+i for i in [str(i) for i in range(1, self._sleeper + 1)]]
+            self._all_coachList = self._threeTierAc_coachList + self._twoTierAC_coachList + self._firstAC_coachList + self._sleeper_coachList
+            
+            self._seating = {key:dict() for key in self._all_coachList}
+            
+            for coach, seats in self._seating.items():
+                if coach.find('S') == 0:
+                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 81)]} 
+                elif coach.find('B') == 0:
+                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 73)]}
+                elif coach.find('A') == 0:
+                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 55)]}
+                elif coach.find('H') == 0:
+                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 23)]}
+            
+        self._consist_created = True
+        print("Success")
         
-        self._seating = {key:dict() for key in self._all_coach_list}
-        
-        for coach, seats in self._seating.items():
-            print("This ran")
-            if coach.find('S') == 0:
-                print("This ran 2")
-                self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 81)]} 
-            elif coach.find('B') == 0:
-                print("This ran 3")
-                self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 73)]}
-            elif coach.find('A') == 0:
-                self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 55)]}
-            elif coach.find('H') == 0:
-                self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 23)]}
-        
-    
     def get_consist(self):
         if hasattr(self, '_seating'):
             return(self._seating)
         else:
             print("Consist hasn't been created yet")
+            
+
+
+
+# Testing
+
+
+    
+    
+    
+    
