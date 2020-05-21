@@ -4,11 +4,6 @@ Created on Thu May 14 15:29:53 2020
 
 Railway booking system
 
-Goal:
-    1. Create a train run using train and seating details
-        - create train and seating details
-    2. Modify bookins
-    
 @author: cgokh
 """
 
@@ -22,7 +17,8 @@ class Train:
         
         Initializes the rake details from a csv file sitting on disk (or server)
         
-        Rake details are not fixed and rakes keep changing and hence
+        Rake details are not fixed and rakes keep changing and hence we need to\
+        lookup the details of the current rake position
         
         '''
         # Using this number we will init the corresponding train
@@ -47,12 +43,20 @@ class Train:
         self._firstAC = int(current_consist["FirstAC"])
         self._sleeper = int(current_consist["Sleeper"])
         self._pantry = int(current_consist["PantryIndicator"])
-        self._rakeType = current_consist["RakeType"]
-        self._destination = current_consist["Destination"]
-        self._origin = current_consist["Origin"]
+        
+        self._rakeType = str(current_consist["RakeType"][0])
+        self._destination = str(current_consist["Destination"][0])
+        self._origin = str(current_consist["Origin"][0])
         
         # All trains have 2 slr coaches. SLR stands for seating-cum luggage rake
         self._SLR = 2
+        
+        # Creating a rake type instance to gather seat numbers
+        self._rake_object = RakeType(self._rakeType)
+        self._num_seats_sleeper = self._rake_object._num_seats_sleeper
+        self._num_seats_threeTierAC = self._rake_object._num_seats_threeTierAC
+        self._num_seats_twoTierAC = self._rake_object._num_seats_twoTierAC
+        self._num_seats_firstAC = self._rake_object._num_seats_firstAC
         
         # Class invariants
         if not isinstance(self._number, int):
@@ -83,15 +87,16 @@ class Train:
             
             self._seating = {key:dict() for key in self._all_coachList}
             
+            
             for coach, seats in self._seating.items():
                 if coach.find('S') == 0:
-                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 81)]} 
+                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, self._num_seats_sleeper)]} 
                 elif coach.find('B') == 0:
-                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 73)]}
+                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, self._num_seats_threeTierAC)]}
                 elif coach.find('A') == 0:
-                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 55)]}
+                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, self._num_seats_twoTierAC)]}
                 elif coach.find('H') == 0:
-                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, 23)]}
+                    self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, self._num_seats_firstAC)]}
             
         self._consist_created = True
         print("Success")
@@ -105,10 +110,38 @@ class Train:
 
 
 
-# Testing
-
-
+class RakeType:
+    '''
+    Inits number of seats in each type of coach
     
+    If rake type changes, number of seats change
+    
+    Can be used to add more distrinct rake type facility in the future
+    '''
+    
+    def __init__(self, rake_type):
+        if rake_type == "LHB":
+            self._num_seats_sleeper = 78
+            self._num_seats_threeTierAC = 72
+            self._num_seats_twoTierAC = 52
+            self._num_seats_firstAC = 24
+            self._rake_type = rake_type
+        elif rake_type == "ICF":
+            self._num_seats_sleeper = 72
+            self._num_seats_threeTierAC = 64
+            self._num_seats_twoTierAC = 46
+            self._num_seats_firstAC = 18
+            self._rake_type = rake_type
+        else:
+            pass
+
+    def rake_type(self):
+        return self._rake_type
+
+
+
+
+
     
     
     
