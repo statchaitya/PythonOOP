@@ -44,9 +44,9 @@ class Train:
         self._sleeper = int(current_consist["Sleeper"])
         self._pantry = int(current_consist["PantryIndicator"])
         
-        self._rakeType = str(current_consist["RakeType"][0])
-        self._destination = str(current_consist["Destination"][0])
-        self._origin = str(current_consist["Origin"][0])
+        self._rakeType = list(current_consist["RakeType"])[0]
+        self._destination = list(current_consist["Destination"])[0]
+        self._origin = list(current_consist["Origin"])[0]
         
         # All trains have 2 slr coaches. SLR stands for seating-cum luggage rake
         self._SLR = 2
