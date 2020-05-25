@@ -9,6 +9,7 @@ Railway booking system
 
 import pandas as pd
 import os
+import datetime
 
 class Train:
     
@@ -74,9 +75,9 @@ class Train:
         print(f"This number of this train is {self._number} going from \
               {self._origin} to {self._destination}")
                                  
-    def create_consist(self):
+    def _get_consist(self):
         '''
-        Creates consist of a train based on the current alignment of coaches
+        Returns consist of a train based on the current alignment of coaches
         '''
         if not self._consist_created:
             self._threeTierAc_coachList = ['B'+i for i in [str(i) for i in range(1, self._threeTierAC + 1)]]
@@ -99,17 +100,22 @@ class Train:
                     self._seating[coach] = {seat:[] for seat in [str(i) for i in range(1, self._num_seats_firstAC)]}
             
         self._consist_created = True
-        print("Success")
         
-    def get_consist(self):
-        if hasattr(self, '_seating'):
-            return(self._seating)
-        else:
-            print("Consist hasn't been created yet")
+        return(self._seating)
             
 
 
-
+class OneWayDetail:
+    
+    def __init__(self, train_class_instance, date):
+        
+        self.for_date = date
+        self.booking_chart = train_class_instance._get_consist()
+    
+    def add_passenger(self, coach_number, seat_number, passenger_instance):
+        self.booking_chart[coach_number][str(seat_number)] = passenger_instance.get_data()
+        
+        
 class RakeType:
     '''
     Inits number of seats in each type of coach
@@ -141,7 +147,40 @@ class RakeType:
 
 
 
+class PassengerDetails:
+    '''
+    Init 1 row of passenger details as a dict
+    '''
+    def __init__(self, name, age, sex):
+        
+        self._name = name
+        self._age = age
+        self._sex = sex
+        if self._age >= 60:
+            self._category = "Senior Citizen"
+        else:
+            self._category = "Adult or Children"
+    
+    def get_data(self):
+        return({'name': self._name,
+                'age': self._age,
+                'sex': self._sex,
+                'category': self._category})
+        
 
+
+
+
+            
+        
+        
+        
+        
+        
+        
+        
+    
+        
     
     
     
