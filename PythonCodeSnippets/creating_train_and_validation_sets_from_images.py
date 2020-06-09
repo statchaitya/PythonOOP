@@ -46,7 +46,7 @@ for filename in all_files:
 
 # Selecting 3k of 25k files
 file_range_cats_and_dogs = range(0, len(cat_files))
-cat_sample = random.sample(file_range_cats_and_dogs, 3000)
+cat_sample = random.sample(file_range_cats_and_dogs, 3000)	
 dog_sample = random.sample(file_range_cats_and_dogs, 3000)
 
 
